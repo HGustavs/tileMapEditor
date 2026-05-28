@@ -1,0 +1,173 @@
+<html>
+<head>
+		<style>
+				body {margin: 0; height: 100%; overflow: hidden}
+		</style>
+		<script>
+
+        //        (\ /)
+        //        (. .)           
+        //       c(")(")     ∴
+        // 
+        // Pentomino ED
+        // https://en.wikipedia.org/wiki/Pentomino
+
+				var c;
+        var mx=0,my=0;
+        var mmx=310;
+        var mmy=140;
+
+//------------------------------------=======############==========----------------------------------------
+//                                          Tilemap editor
+//------------------------------------=======############==========----------------------------------------
+	        
+
+const gridSize=50;                          // Grid size
+const gridOffs=50;                          // Offset from screen edges
+const gridW=9;                              // Grid width and height at 8x8 currently
+const gridH=9;
+
+
+function mouseMove(e,t)
+{
+		var rect = e.target.getBoundingClientRect();
+    mx = e.clientX - rect.left; //x position within the element.
+    my = e.clientY - rect.top;  //y position within the element
+
+    mx = Math.floor((mx-gridOffs)/gridSize)-Math.floor(gridW/2);
+    my = Math.floor((my-gridOffs)/gridSize)-Math.floor(gridH/2);
+
+ }
+
+ function mouseDown(e)
+ {
+    mmx=mx;
+    mmy=my;
+
+    xk=mx;
+    yk=my;
+ }
+
+function keydown(e)
+{
+		if(e.keyCode==37){
+				xd=-1;
+		}else if(e.keyCode==39){
+				xd=1;
+		}else if(e.keyCode==38){
+				yd=-1;
+		}else if(e.keyCode==40){
+				yd=1;
+		}
+}
+
+function keyup(e)
+{
+		if(e.keyCode==37||e.keyCode==39){
+				xd=0;
+		}else if(e.keyCode==38||e.keyCode==40){
+				yd=0;
+		}
+}			
+
+function setup()
+{
+		var cc = document.getElementById("myCanvas");
+    c = cc.getContext("2d");
+	
+		drawit();
+}
+							
+function updatestate()
+{
+
+}
+
+// -------------------==============########==============-------------------
+// Useful bits
+
+function drawLine(x1,y1,x2,y2,width,color)
+{
+    c.strokeStyle=color;
+    c.globalAlpha=1.0;
+    c.lineWidth=width;
+
+    c.beginPath();
+    c.moveTo(x1,y1);
+    c.lineTo(x2,y2);
+    c.stroke();
+
+    c.lineWidth=1.0;
+}
+
+function drawCirc(x1,y1,rad,width,color)
+{
+      c.strokeStyle=color;
+      c.lineWidth=width;
+      c.beginPath();
+		  c.arc(x1, y1, rad, 0, 2 * Math.PI);
+		  c.stroke();
+      c.lineWidth=1.0; 				
+}
+
+function drawSlashes(xk,yk,color)
+{
+    const slashinc=6;
+    const slashsep=8;
+    const slashwidth=4;
+
+    c.strokeStyle=color;
+    c.lineWidth=3;
+    c.beginPath();
+
+    c.moveTo(xk-slashwidth,yk-slashinc-slashsep);
+    c.lineTo(xk+slashwidth,yk+slashinc-slashsep);
+
+    c.moveTo(xk-slashwidth,yk-slashinc+slashsep);
+    c.lineTo(xk+slashwidth,yk+slashinc+slashsep);
+
+	  c.stroke();
+    c.lineWidth=1.0; 				
+}
+
+
+
+function drawit()
+{	
+
+		c.clearRect(0,0,900,900);
+
+    // Draw grid
+    c.globalAlpha=0.5;
+    for(var i=0;i<=gridH;i++){
+        c.beginPath();
+        if(i==0||i==gridH){
+            c.strokeStyle="#F80";        
+        }else{
+            c.strokeStyle="#080";                
+        }
+        c.moveTo(gridOffs,gridOffs+(i*gridSize));
+        c.lineTo(gridOffs+(gridW*gridSize),gridOffs+(i*gridSize));
+        c.moveTo(gridOffs+(i*gridSize),gridOffs);
+        c.lineTo(gridOffs+(i*gridSize),gridOffs+(gridH*gridSize));
+        
+        c.stroke();
+    }
+
+    // Draw center tile
+    drawCirc(gridOffs+(gridW*gridSize*0.5),gridOffs+(gridH*gridSize*0.5),5,2,"#F80");
+
+    // HUD
+    c,fillStyle="#343";
+    c.font = "15px Arial Narrow";
+    c.fillText(mx+" "+my,550,40);
+
+		window.requestAnimationFrame(drawit);
+}
+			
+		</script>
+</head>
+<body onload="setup();" onkeydown="keydown(event);" onkeyup="keyup(event);" onmousedown="mouseDown(event)" onmousemove="mouseMove(event)">
+ 	<canvas id="myCanvas" width="900" height="900" style="border:1px solid #000000;"></canvas>
+	<svg style='border:1px dotted red;' height="900" width="900" id="mainsvg"></svg>
+</body>
