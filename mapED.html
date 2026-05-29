@@ -7,7 +7,7 @@
 
         //        (\ /)
         //        (. .)           
-        //       c(")(")     ∴
+        //       c(")(")       ∴
         // 
         // Pentomino ED
         // https://en.wikipedia.org/wiki/Pentomino
@@ -28,15 +28,17 @@ const gridW=9;                              // Grid width and height at 8x8 curr
 const gridH=9;
 
 
-function mouseMove(e,t)
+function mouseMove(e)
 {
+    console.log(e);
+/*
 		var rect = e.target.getBoundingClientRect();
     mx = e.clientX - rect.left; //x position within the element.
     my = e.clientY - rect.top;  //y position within the element
 
     mx = Math.floor((mx-gridOffs)/gridSize)-Math.floor(gridW/2);
     my = Math.floor((my-gridOffs)/gridSize)-Math.floor(gridH/2);
-
+*/
  }
 
  function mouseDown(e)
@@ -46,6 +48,9 @@ function mouseMove(e,t)
 
     xk=mx;
     yk=my;
+
+    e.preventDefault();
+    return false;
  }
 
 function keydown(e)
@@ -74,6 +79,16 @@ function setup()
 {
 		var cc = document.getElementById("myCanvas");
     c = cc.getContext("2d");
+
+/*
+    cc.addEventListener("click", function (e) {
+        console.log(e);
+        e.preventDefault();
+        return false;
+    });
+*/
+    cc.addEventListener('contextmenu', event => event.preventDefault());
+    cc.addEventListener('mousemove',function(e){mouseMove(e)});
 	
 		drawit();
 }
@@ -130,7 +145,38 @@ function drawSlashes(xk,yk,color)
     c.lineWidth=1.0; 				
 }
 
+function drawSegments(pointlist)
+{
+    c.beginPath();
+    for(var i=0;i<pointlist.length;i++){
+        if(i==0){
+            c.moveTo(pointlist[i].x,pointlist[i].y);
+        }else{
+            c.lineTo(pointlist[i].x,pointlist[i].y);        
+        }
+    }
+    c.fill();
+}
 
+function drawCross(xk,yk,length,linewidth,color)
+{
+    var p1={x:xk,y:yk-(linewidth*2)};
+    var p2={x:(xk-length+linewidth),y:(yk-length-linewidth)};
+    var p3={x:(xk-length-linewidth),y:(yk-length+linewidth)};    
+    var p4={x:xk-(linewidth*2),y:yk};
+    var p5={x:(xk-length-linewidth),y:(yk+length-linewidth)};
+    var p6={x:(xk-length+linewidth),y:(yk+length+linewidth)}; 
+    var p7={x:xk,y:yk+(linewidth*2)};
+    var p8={x:(xk+length-linewidth),y:(yk+length+linewidth)};
+    var p9={x:(xk+length+linewidth),y:(yk+length-linewidth)};
+    var p10={x:xk+(linewidth*2),y:yk};
+    var p11={x:(xk+length+linewidth),y:(yk-length+linewidth)};
+    var p12={x:(xk+length-linewidth),y:(yk-length-linewidth)};
+
+    var pointlist=[p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p1];
+    c.fillStyle=color;
+    drawSegments(pointlist,"#800");
+}
 
 function drawit()
 {	
@@ -157,6 +203,9 @@ function drawit()
     // Draw center tile
     drawCirc(gridOffs+(gridW*gridSize*0.5),gridOffs+(gridH*gridSize*0.5),5,2,"#F80");
 
+    c.globalAlpha=1.0;
+    drawCross(gridOffs+(gridW*gridSize*0.5)+gridSize,gridOffs+(gridH*gridSize*0.5),14,2,"#000");
+
     // HUD
     c,fillStyle="#343";
     c.font = "15px Arial Narrow";
@@ -167,7 +216,7 @@ function drawit()
 			
 		</script>
 </head>
-<body onload="setup();" onkeydown="keydown(event);" onkeyup="keyup(event);" onmousedown="mouseDown(event)" onmousemove="mouseMove(event)">
+<body onload="setup();" onkeydown="keydown(event);" onkeyup="keyup(event);" >
  	<canvas id="myCanvas" width="900" height="900" style="border:1px solid #000000;"></canvas>
 	<svg style='border:1px dotted red;' height="900" width="900" id="mainsvg"></svg>
 </body>
