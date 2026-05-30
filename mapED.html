@@ -30,24 +30,17 @@ const gridH=9;
 
 function mouseMove(e)
 {
-    console.log(e);
-/*
 		var rect = e.target.getBoundingClientRect();
     mx = e.clientX - rect.left; //x position within the element.
     my = e.clientY - rect.top;  //y position within the element
 
     mx = Math.floor((mx-gridOffs)/gridSize)-Math.floor(gridW/2);
     my = Math.floor((my-gridOffs)/gridSize)-Math.floor(gridH/2);
-*/
- }
+}
 
  function mouseDown(e)
  {
-    mmx=mx;
-    mmy=my;
-
-    xk=mx;
-    yk=my;
+    console.log(e.buttons);
 
     e.preventDefault();
     return false;
@@ -80,15 +73,10 @@ function setup()
 		var cc = document.getElementById("myCanvas");
     c = cc.getContext("2d");
 
-/*
-    cc.addEventListener("click", function (e) {
-        console.log(e);
-        e.preventDefault();
-        return false;
-    });
-*/
     cc.addEventListener('contextmenu', event => event.preventDefault());
     cc.addEventListener('mousemove',function(e){mouseMove(e)});
+    cc.addEventListener('mousedown',function(e){mouseDown(e)});
+
 	
 		drawit();
 }
@@ -125,24 +113,27 @@ function drawCirc(x1,y1,rad,width,color)
       c.lineWidth=1.0; 				
 }
 
-function drawSlashes(xk,yk,color)
+function drawThickLine(x1,y1,x2,y2,linewidth,color)
 {
-    const slashinc=6;
-    const slashsep=8;
-    const slashwidth=4;
+    var dx=x2-x1;
+    var dy=y2-y1;
+    var len=Math.sqrt((dx*dx)+(dy*dy));
+    var ox=(-dy/len)*linewidth;
+    var oy=(dx/len)*linewidth;
+    var sx=(dx/len)*linewidth;
+    var sy=(dy/len)*linewidth;
 
-    c.strokeStyle=color;
-    c.lineWidth=3;
-    c.beginPath();
+    p1={x:x1,y:y1};
+    p2={x:x1+sx+ox,y:y1+sy+oy};
+    p3={x:x2-sx+ox,y:y2-sy+oy};
+    p4={x:x2,y:y2};
+    p5={x:x2-sx-ox,y:y2-sy-oy};
+    p6={x:x1+sx-ox,y:y1+sy-oy};
+    
+    var pointlist=[p1,p2,p3,p4,p5,p6,p1];
+    c.fillStyle=color;
+    drawSegments(pointlist,"#800");
 
-    c.moveTo(xk-slashwidth,yk-slashinc-slashsep);
-    c.lineTo(xk+slashwidth,yk+slashinc-slashsep);
-
-    c.moveTo(xk-slashwidth,yk-slashinc+slashsep);
-    c.lineTo(xk+slashwidth,yk+slashinc+slashsep);
-
-	  c.stroke();
-    c.lineWidth=1.0; 				
 }
 
 function drawSegments(pointlist)
@@ -155,7 +146,10 @@ function drawSegments(pointlist)
             c.lineTo(pointlist[i].x,pointlist[i].y);        
         }
     }
-    c.fill();
+    if(pointlist.length>0){
+        c.lineTo(pointlist[0].x,pointlist[0].y);
+    }
+    c.stroke();
 }
 
 function drawCross(xk,yk,length,linewidth,color)
@@ -173,9 +167,47 @@ function drawCross(xk,yk,length,linewidth,color)
     var p11={x:(xk+length+linewidth),y:(yk-length+linewidth)};
     var p12={x:(xk+length-linewidth),y:(yk-length-linewidth)};
 
-    var pointlist=[p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p1];
+    var pointlist=[p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12];
     c.fillStyle=color;
     drawSegments(pointlist,"#800");
+}
+
+// We draw a tile with the following characteristics 
+// 
+function drawTile(x,y,tileW,tileH,linewidth,lineoffs,tileno)
+{
+    // Draw all 4 sides
+    // Draw cross in center
+    // Draw diagonal lines
+
+    // drawThickLine(90,165,110,175,2,"#000");
+    // drawThickLine(90,175,110,185,2,"#000");
+    
+    var lo=lineoffs*0.75;
+    pointlist=[{x:x+lo,y:y+lo},{x:x+lo,y:y+tileH-lo},{x:x+tileW-lo,y:y+tileH-lo},{x:x+tileW-lo,y:y+lo}];
+    drawSegments(pointlist,"#000");
+
+    if(tileno==7){
+        // 7 is normal tile
+    }else if(tileno==8){
+        drawCross(x+(tileW*0.5),y+(tileH*0.5),tileW*0.2,linewidth,"#000");
+    }else if(tileno==1){
+        // Top connectior
+        drawThickLine( x+(tileW*0.5)-(lineoffs*0.5),y, x+(tileW*0.5)-(lineoffs),y+(lineoffs*2), linewidth, "#000");
+        drawThickLine( x+(tileW*0.5)+(lineoffs),y,x+(tileW*0.5)+(lineoffs*0.5),y+(lineoffs*2), linewidth, "#000");
+    }else if(tileno==2){
+        // Bottom connectior
+        drawThickLine( x+(tileW*0.5)-(lineoffs*0.5),y+tileH, x+(tileW*0.5)-(lineoffs),y+tileH-(lineoffs*2), linewidth, "#000");
+        drawThickLine( x+(tileW*0.5)+(lineoffs),y+tileH,x+(tileW*0.5)+(lineoffs*0.5),y+tileH-(lineoffs*2), linewidth, "#000");
+    }else if(tileno==3){
+        // Right connectior
+        drawThickLine( x+tileW,y+(tileH*0.5)-(lineoffs*0.5),x+tileW-(lineoffs*2), y+(tileH*0.5)-(lineoffs), linewidth, "#000");
+        drawThickLine( x+tileW,y+(tileH*0.5)+(lineoffs),x+tileW-(lineoffs*2), y+(tileH*0.5)+(lineoffs*0.5), linewidth, "#000");
+    }else if(tileno==4){
+        // Left connectior
+        drawThickLine( x,y+(tileH*0.5)-(lineoffs*0.5),x+(lineoffs*2), y+(tileH*0.5)-(lineoffs), linewidth, "#000");
+        drawThickLine( x,y+(tileH*0.5)+(lineoffs),x+(lineoffs*2), y+(tileH*0.5)+(lineoffs*0.5), linewidth, "#000");
+    }
 }
 
 function drawit()
@@ -205,6 +237,17 @@ function drawit()
 
     c.globalAlpha=1.0;
     drawCross(gridOffs+(gridW*gridSize*0.5)+gridSize,gridOffs+(gridH*gridSize*0.5),14,2,"#000");
+
+    // drawThickLine(90,165,110,175,2,"#000");
+    // drawThickLine(90,175,110,185,2,"#000");
+
+    // Draw hud icon tiles
+    c.textBaseline="middle";
+    c.textAlign="center";
+    for(var i=1;i<8;i++){
+        drawTile(550,(gridSize*2)+(i*gridSize),gridSize,gridSize,2,8,i);
+        c.fillText(i,550+(gridSize*0.5),(gridSize*2)+(gridSize*0.5)+(i*gridSize));
+    }
 
     // HUD
     c,fillStyle="#343";
