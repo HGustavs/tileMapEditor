@@ -187,28 +187,34 @@ function drawTile(x,y,tileW,tileH,linewidth,lineoffs,tileno)
     pointlist=[{x:x+lo,y:y+lo},{x:x+lo,y:y+tileH-lo},{x:x+tileW-lo,y:y+tileH-lo},{x:x+tileW-lo,y:y+lo}];
     drawSegments(pointlist,"#000");
 
-    if(tileno==7){
-        // 7 is normal tile
-    }else if(tileno==8){
-        drawCross(x+(tileW*0.5),y+(tileH*0.5),tileW*0.2,linewidth,"#000");
-    }else if(tileno==1){
+    if(tileno==8){
+        drawCross(x+(tileW*0.5),y+(tileH*0.5),tileW*0.15,linewidth*0.5,"#000");
+    }
+    if(tileno==1||tileno==5){
         // Top connectior
         drawThickLine( x+(tileW*0.5)-(lineoffs*0.5),y, x+(tileW*0.5)-(lineoffs),y+(lineoffs*2), linewidth, "#000");
         drawThickLine( x+(tileW*0.5)+(lineoffs),y,x+(tileW*0.5)+(lineoffs*0.5),y+(lineoffs*2), linewidth, "#000");
-    }else if(tileno==2){
+    }
+    if(tileno==2||tileno==5){
         // Bottom connectior
         drawThickLine( x+(tileW*0.5)-(lineoffs*0.5),y+tileH, x+(tileW*0.5)-(lineoffs),y+tileH-(lineoffs*2), linewidth, "#000");
         drawThickLine( x+(tileW*0.5)+(lineoffs),y+tileH,x+(tileW*0.5)+(lineoffs*0.5),y+tileH-(lineoffs*2), linewidth, "#000");
-    }else if(tileno==3){
+    }
+    if(tileno==3||tileno==6){
         // Right connectior
         drawThickLine( x+tileW,y+(tileH*0.5)-(lineoffs*0.5),x+tileW-(lineoffs*2), y+(tileH*0.5)-(lineoffs), linewidth, "#000");
         drawThickLine( x+tileW,y+(tileH*0.5)+(lineoffs),x+tileW-(lineoffs*2), y+(tileH*0.5)+(lineoffs*0.5), linewidth, "#000");
-    }else if(tileno==4){
+    }
+    if(tileno==4||tileno==6){
         // Left connectior
         drawThickLine( x,y+(tileH*0.5)-(lineoffs*0.5),x+(lineoffs*2), y+(tileH*0.5)-(lineoffs), linewidth, "#000");
         drawThickLine( x,y+(tileH*0.5)+(lineoffs),x+(lineoffs*2), y+(tileH*0.5)+(lineoffs*0.5), linewidth, "#000");
     }
 }
+
+var tilemap=[];
+
+tilemap.push({x:0,y:0,no:8});
 
 function drawit()
 {	
@@ -235,18 +241,17 @@ function drawit()
     // Draw center tile
     drawCirc(gridOffs+(gridW*gridSize*0.5),gridOffs+(gridH*gridSize*0.5),5,2,"#F80");
 
-    c.globalAlpha=1.0;
-    drawCross(gridOffs+(gridW*gridSize*0.5)+gridSize,gridOffs+(gridH*gridSize*0.5),14,2,"#000");
-
-    // drawThickLine(90,165,110,175,2,"#000");
-    // drawThickLine(90,175,110,185,2,"#000");
-
     // Draw hud icon tiles
     c.textBaseline="middle";
     c.textAlign="center";
-    for(var i=1;i<8;i++){
-        drawTile(550,(gridSize*2)+(i*gridSize),gridSize,gridSize,2,8,i);
-        c.fillText(i,550+(gridSize*0.5),(gridSize*2)+(gridSize*0.5)+(i*gridSize));
+    for(var i=1;i<9;i++){
+        drawTile(550,(gridSize)+(i*gridSize),gridSize,gridSize,2,8,i);
+        c.fillText(i,550+(gridSize*0.5),(gridSize)+(gridSize*0.5)+(i*gridSize));
+    }
+
+    // Redraw Tilemap
+    for(item of tilemap){
+        drawTile((item.x+5)*gridSize,(item.y+5)*gridSize,gridSize,gridSize,2,8,item.no);
     }
 
     // HUD
