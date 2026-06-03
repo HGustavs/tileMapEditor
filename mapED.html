@@ -3,6 +3,7 @@
 		<style>
 				body {margin: 0; height: 100%; overflow: hidden}
 		</style>
+    <script>document.write("<script type='text/javascript' src='pento.js?t=" + Date.now() + "'><\/script>");</script>
 		<script>
 
         //        (\ /)
@@ -27,6 +28,11 @@ const gridOffs=50;                          // Offset from screen edges
 const gridW=9;                              // Grid width and height at 8x8 currently
 const gridH=9;
 
+var tilemap=[];
+var mapp=[];
+
+
+var currenttile=2;                          // Current chosen tile
 
 function mouseMove(e)
 {
@@ -40,9 +46,50 @@ function mouseMove(e)
 
  function mouseDown(e)
  {
-    console.log(e.buttons);
-
     e.preventDefault();
+    if(mx==6){
+        if(my>=-4&&my<=7){
+            currenttile=my+5;        
+        }
+        if(my==-5){
+            str="[ ";
+            var i=0;
+            for(item of tilemap){
+                if(i>0) str+=", ";
+                str+="{";
+                str+="x:"+item.x;
+                str+=",y:"+item.y;
+                str+=",no:"+item.no;
+                str+="}";
+                i++;
+            }            
+            str+=" ]";
+            alert(str);
+        }
+    }else{
+        if(e.buttons==1){
+            // Update tile
+            for(item of tilemap){
+                // If item is found
+                if(item.x==mx&&item.y==my){
+                    item.no=currenttile;
+                    return false;
+                }
+            }
+            if(mx>=-4&&mx<=4&&my>=-4&&my<=4){
+                tilemap.push({x:mx,y:my,no:currenttile});
+            }
+        }else if(e.buttons==2){
+            var tmp=[];
+            for(item of tilemap){
+                // If item is found
+                if(!(item.x==mx&&item.y==my)){
+                    tmp.push(item);
+                }
+            }
+            tilemap=tmp;
+        }
+    }
     return false;
  }
 
@@ -77,6 +124,17 @@ function setup()
     cc.addEventListener('mousemove',function(e){mouseMove(e)});
     cc.addEventListener('mousedown',function(e){mouseDown(e)});
 
+    // Initiate mapp
+    for(var j=0;j<gridH;j++){
+        mapp[j]=[];
+        for(var i=0;i<gridW;i++){
+            // No limit
+            var limitarr=[1,2,3,4,5,6,7,8];
+ 
+            var mapno=Math.floor((Math.random()*8)+1);
+            mapp[j][i]={xk:i,yk:j,limit:limitarr,tileno:mapno};
+        }
+    }
 	
 		drawit();
 }
@@ -130,13 +188,13 @@ function drawThickLine(x1,y1,x2,y2,linewidth,color)
     p5={x:x2-sx-ox,y:y2-sy-oy};
     p6={x:x1+sx-ox,y:y1+sy-oy};
     
-    var pointlist=[p1,p2,p3,p4,p5,p6,p1];
+    var pointlist=[p1,p2,p3,p4,p5,p6];
     c.fillStyle=color;
-    drawSegments(pointlist,"#800");
+    drawSegments(pointlist,false);
 
 }
 
-function drawSegments(pointlist)
+function drawSegments(pointlist,kind)
 {
     c.beginPath();
     for(var i=0;i<pointlist.length;i++){
@@ -149,7 +207,13 @@ function drawSegments(pointlist)
     if(pointlist.length>0){
         c.lineTo(pointlist[0].x,pointlist[0].y);
     }
-    c.stroke();
+
+    if(kind){
+        c.stroke();
+    }else{
+        c.fill();    
+    }
+
 }
 
 function drawCross(xk,yk,length,linewidth,color)
@@ -169,52 +233,54 @@ function drawCross(xk,yk,length,linewidth,color)
 
     var pointlist=[p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12];
     c.fillStyle=color;
-    drawSegments(pointlist,"#800");
+    drawSegments(pointlist,false);
 }
 
 // We draw a tile with the following characteristics 
 // 
 function drawTile(x,y,tileW,tileH,linewidth,lineoffs,tileno)
-{
-    // Draw all 4 sides
-    // Draw cross in center
-    // Draw diagonal lines
-
-    // drawThickLine(90,165,110,175,2,"#000");
-    // drawThickLine(90,175,110,185,2,"#000");
-    
-    var lo=lineoffs*0.75;
+{   
+    var lo=lineoffs*0.25;
+    if(tileno>7){
+        c.fillStyle="#68b";        
+    }else{
+        c.fillStyle="#b86";    
+    }
     pointlist=[{x:x+lo,y:y+lo},{x:x+lo,y:y+tileH-lo},{x:x+tileW-lo,y:y+tileH-lo},{x:x+tileW-lo,y:y+lo}];
-    drawSegments(pointlist,"#000");
+    drawSegments(pointlist,false);
 
     if(tileno==8){
-        drawCross(x+(tileW*0.5),y+(tileH*0.5),tileW*0.15,linewidth*0.5,"#000");
+        drawCross(x+(tileW*0.5),y+(tileH*0.5),tileW*0.15,linewidth*0.5,"#A40");
     }
-    if(tileno==1||tileno==5){
+    if(tileno==1||tileno==5||tileno==9){
         // Top connectior
         drawThickLine( x+(tileW*0.5)-(lineoffs*0.5),y, x+(tileW*0.5)-(lineoffs),y+(lineoffs*2), linewidth, "#000");
         drawThickLine( x+(tileW*0.5)+(lineoffs),y,x+(tileW*0.5)+(lineoffs*0.5),y+(lineoffs*2), linewidth, "#000");
     }
-    if(tileno==2||tileno==5){
+    if(tileno==2||tileno==5||tileno==10){
         // Bottom connectior
-        drawThickLine( x+(tileW*0.5)-(lineoffs*0.5),y+tileH, x+(tileW*0.5)-(lineoffs),y+tileH-(lineoffs*2), linewidth, "#000");
-        drawThickLine( x+(tileW*0.5)+(lineoffs),y+tileH,x+(tileW*0.5)+(lineoffs*0.5),y+tileH-(lineoffs*2), linewidth, "#000");
+        drawThickLine( x+(tileW*0.5)-(lineoffs),y+tileH,x+(tileW*0.5)-(lineoffs*0.5),y+tileH-(lineoffs*2), linewidth, "#000");
+        drawThickLine( x+(tileW*0.5)+(lineoffs*0.5),y+tileH,x+(tileW*0.5)+(lineoffs),y+tileH-(lineoffs*2), linewidth, "#000");
     }
-    if(tileno==3||tileno==6){
+    if(tileno==3||tileno==6||tileno==11){
         // Right connectior
         drawThickLine( x+tileW,y+(tileH*0.5)-(lineoffs*0.5),x+tileW-(lineoffs*2), y+(tileH*0.5)-(lineoffs), linewidth, "#000");
         drawThickLine( x+tileW,y+(tileH*0.5)+(lineoffs),x+tileW-(lineoffs*2), y+(tileH*0.5)+(lineoffs*0.5), linewidth, "#000");
     }
-    if(tileno==4||tileno==6){
+    if(tileno==4||tileno==6||tileno==12){
         // Left connectior
-        drawThickLine( x,y+(tileH*0.5)-(lineoffs*0.5),x+(lineoffs*2), y+(tileH*0.5)-(lineoffs), linewidth, "#000");
-        drawThickLine( x,y+(tileH*0.5)+(lineoffs),x+(lineoffs*2), y+(tileH*0.5)+(lineoffs*0.5), linewidth, "#000");
+        drawThickLine( x,y+(tileH*0.5)-(lineoffs),x+(lineoffs*2), y+(tileH*0.5)-(lineoffs*0.5), linewidth, "#000");
+        drawThickLine( x,y+(tileH*0.5)+(lineoffs*0.5),x+(lineoffs*2), y+(tileH*0.5)+(lineoffs), linewidth, "#000");
     }
 }
 
-var tilemap=[];
 
-tilemap.push({x:0,y:0,no:8});
+//tilemap.push({x:0,y:0,no:8});
+
+function placeTile(xk,yk)
+{
+    // We place 
+}
 
 function drawit()
 {	
@@ -238,28 +304,101 @@ function drawit()
         c.stroke();
     }
 
-    // Draw center tile
-    drawCirc(gridOffs+(gridW*gridSize*0.5),gridOffs+(gridH*gridSize*0.5),5,2,"#F80");
+    c.globalAlpha=1.0;
 
     // Draw hud icon tiles
     c.textBaseline="middle";
     c.textAlign="center";
-    for(var i=1;i<9;i++){
-        drawTile(550,(gridSize)+(i*gridSize),gridSize,gridSize,2,8,i);
-        c.fillText(i,550+(gridSize*0.5),(gridSize)+(gridSize*0.5)+(i*gridSize));
+    for(var i=1;i<13;i++){
+
+        drawTile(550,(i*gridSize),gridSize,gridSize,2,8,i);
+
+        if(i==currenttile){
+            pointlist=[{x:550,y:(i*gridSize)},{x:600,y:(i*gridSize)},{x:600,y:(gridSize)+(i*gridSize)},{x:550,y:(gridSize)+(i*gridSize)}];
+            c.strokeStyle="#68b";
+            c.lineWidth=2;
+            drawSegments(pointlist,true); 
+            c.lineWidth=1;   
+        }
+
+        c.fillStyle="#000";
+        c.fillText(i,550+(gridSize*0.5),(gridSize*0.5)+(i*gridSize));
     }
 
     // Redraw Tilemap
-    for(item of tilemap){
-        drawTile((item.x+5)*gridSize,(item.y+5)*gridSize,gridSize,gridSize,2,8,item.no);
+    //for(item of tilemap){
+    //    drawTile((item.x+5)*gridSize,(item.y+5)*gridSize,gridSize,gridSize,2,8,item.no);
+    //}
+
+    // Update tilemap graphic
+    for(var yk=0;yk<gridH;yk++){
+        for(var xk=0;xk<gridW;xk++){
+            if(mapp[yk][xk].tileno>0) drawTile((xk*gridSize)+gridSize,(yk*gridSize)+gridSize,gridSize,gridSize,2,8,mapp[yk][xk].tileno);    
+        }
     }
+
+    // Draw center tile
+    c.globalAlpha=0.5;
+    drawCirc(gridOffs+(gridW*gridSize*0.5),gridOffs+(gridH*gridSize*0.5),5,2,"#809");
+    c.globalAlpha=1.0;
 
     // HUD
     c,fillStyle="#343";
     c.font = "15px Arial Narrow";
     c.fillText(mx+" "+my,550,40);
 
-		window.requestAnimationFrame(drawit);
+    // Draw Minis
+    var yk=1;
+    var xk=1;
+
+    // Figure out extents    
+    for(pento of pentominos){
+
+        for(arr of pento.pos){
+            var minx=100;
+            var miny=100;
+            var maxx=-100;
+            var maxy=-100;
+            for(item of arr){
+                if(item.no<=7){
+                    if(item.x<minx) minx=item.x;
+                    if(item.y<miny) miny=item.y;
+                    if(item.x>maxx) maxx=item.x;
+                    if(item.y>maxy) maxy=item.y;
+                    console.log(item.y,miny);                
+                }
+            }
+            
+            // Draw Tile
+            for(item of arr){        
+                if(item.no<=7){
+                    c.fillStyle="#000";
+                    c.fillRect(((xk-minx+item.x)*4)-1,((yk-miny+item.y)*4)-1,6,6);
+                }            
+            }
+            for(item of arr){        
+                if(item.no<=7){
+                    c.fillStyle=pento.color;
+                    c.fillRect((xk-minx+item.x)*4,(yk-miny+item.y)*4,4,4);
+                    if(item.x==0&&item.y==0){
+                        c.fillStyle="#000";
+                        c.fillRect(((xk-minx+item.x)*4)+1,((yk-miny+item.y)*4)+1,2,2);
+                    }
+                }            
+            }
+
+            console.log(pento.color,miny,maxy);
+
+            yk+=(maxy-miny)+2;
+            if(yk>180){
+                xk+=7;
+                yk=1;
+            }       
+        }
+
+    }
+
+		// window.requestAnimationFrame(drawit);
 }
 			
 		</script>
