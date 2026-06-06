@@ -40,8 +40,8 @@ function mouseMove(e)
     mx = e.clientX - rect.left; //x position within the element.
     my = e.clientY - rect.top;  //y position within the element
 
-    mx = Math.floor((mx-gridOffs)/gridSize)-Math.floor(gridW/2);
-    my = Math.floor((my-gridOffs)/gridSize)-Math.floor(gridH/2);
+    mx = Math.floor((mx-gridOffs)/gridSize); // -Math.floor(gridW/2);
+    my = Math.floor((my-gridOffs)/gridSize); // -Math.floor(gridH/2);
 }
 
  function mouseDown(e)
@@ -129,10 +129,10 @@ function setup()
         mapp[j]=[];
         for(var i=0;i<gridW;i++){
             // No limit
-            var limitarr=[1,2,3,4,5,6,7,8];
+            var limit=0;
  
-            var mapno=Math.floor((Math.random()*8)+1);
-            mapp[j][i]={xk:i,yk:j,limit:limitarr,tileno:mapno};
+            //var mapno=Math.floor((Math.random()*8)+1);
+            mapp[j][i]={xk:i,yk:j,limit:0,tileno:0};
         }
     }
 	
@@ -213,7 +213,6 @@ function drawSegments(pointlist,kind)
     }else{
         c.fill();    
     }
-
 }
 
 function drawCross(xk,yk,length,linewidth,color)
@@ -236,8 +235,21 @@ function drawCross(xk,yk,length,linewidth,color)
     drawSegments(pointlist,false);
 }
 
+// We draw a simple tile that depicts the limit 
+function drawLimit(x,y,tileW,tileH,linewidth,lineoffs,tileno)
+{   
+    c.globalAlpha=0.5;
+    c.fillStyle="#68b"; 
+
+    c.fillRect(x,y,tileW,tileH);
+
+    c.globalAlpha=1.0;
+
+    c.fillStyle="#000";
+    c.fillText(tileno,x+(tileW*0.5),y+(tileH*0.5));
+}
+
 // We draw a tile with the following characteristics 
-// 
 function drawTile(x,y,tileW,tileH,linewidth,lineoffs,tileno)
 {   
     var lo=lineoffs*0.25;
@@ -274,13 +286,87 @@ function drawTile(x,y,tileW,tileH,linewidth,lineoffs,tileno)
     }
 }
 
+function highLightTile(xk,yk,color,mode)
+{
+    c.globalAlpha=0.5;
+    c.lineWidth=4; 
+    if(mode){
+        c.fillStyle=color;
+        c.fillRect((xk*gridSize)+gridSize,(yk*gridSize)+gridSize,gridSize,gridSize);
+    }else{
+        c.strokeStyle=color;
+        c.strokeRect((xk*gridSize)+gridSize,(yk*gridSize)+gridSize,gridSize,gridSize);    
+    }
+    c.globalAlpha=1.0;
+}
+
+function convertLimit(limit)
+{
+    if(limit==8) return 8;
+    if(limit==12) return 4;
+    if(limit==11) return 3;
+    if(limit==10) return 2;
+    if(limit==9) return 1;
+    return 0;
+}
 
 //tilemap.push({x:0,y:0,no:8});
 
-function placeTile(xk,yk)
+function placeTile(xk,yk,setno,tileno)
 {
-    // We place 
+    // We place a tile at a given coordinate
+    var tileset=pentominos[setno];
+    var items=tileset.pos[tileno];
+
+    // We update tilemap to fit each item
+    for(item of items){
+        if(item.no<8){
+            mapp[yk+item.y][xk+item.x].tileno=item.no;   
+            mapp[yk+item.y][xk+item.x].limit=8;     
+        }else{
+            // We set limit to either 8 (no admittance) or to mirror of link tile
+            mapp[yk+item.y][xk+item.x].limit=convertLimit(item.no);
+        }
+    }
 }
+
+// Go through list and check availability we give pno and index of variant
+function availableTile(xk,yk,setno,tileno)
+{
+    // We place a tile at a given coordinate
+    var tileset=pentominos[0];
+    var items=tileset.pos[0];
+    var fail=false;
+    for(item of items){
+        if(((yk+item.y)>=0)&&((yk+item.y)<gridH)&&((xk+item.x)>=0)&&((xk+item.x)<gridW)){
+            var state=mapp[yk+item.y][xk+item.x];    
+            if(item.no<8){
+                    if((item.no==state.limit)||(state.limit==0)){
+                        // Do nothing
+                    }else{ 
+                        fail=true;
+                    }
+                    //highLightTile((xk+item.x),(yk+item.y),"#84f",fail);
+            }else{
+                // We must check for overwriting limits if there is an X limit we can not overwrite this with an Y limnit
+                itemlimit=convertLimit(item.no);
+                if(itemlimit!=state.limit&&state.limit!=0&&itemlimit!=state.tileno){
+                    fail=true;
+                }
+            }
+        }else{
+            // Outside Bounds
+            fail=true;
+        }
+    }
+
+    // We return whether or not a tile can be placed here
+    return fail;
+}
+
+// Find Candidate by Going through all connectors and finding corresponding targets
+// 
+
 
 function drawit()
 {	
@@ -330,12 +416,17 @@ function drawit()
     //    drawTile((item.x+5)*gridSize,(item.y+5)*gridSize,gridSize,gridSize,2,8,item.no);
     //}
 
+    placeTile(4,2,5,1);
+
     // Update tilemap graphic
     for(var yk=0;yk<gridH;yk++){
         for(var xk=0;xk<gridW;xk++){
             if(mapp[yk][xk].tileno>0) drawTile((xk*gridSize)+gridSize,(yk*gridSize)+gridSize,gridSize,gridSize,2,8,mapp[yk][xk].tileno);    
+            if(mapp[yk][xk].limit>0) drawLimit((xk*gridSize)+gridSize,(yk*gridSize)+gridSize,gridSize,gridSize,2,8,mapp[yk][xk].limit);    
         }
     }
+
+    availableTile(mx,my,5,1);
 
     // Draw center tile
     c.globalAlpha=0.5;
@@ -353,7 +444,6 @@ function drawit()
 
     // Figure out extents    
     for(pento of pentominos){
-
         for(arr of pento.pos){
             var minx=100;
             var miny=100;
@@ -364,18 +454,18 @@ function drawit()
                     if(item.x<minx) minx=item.x;
                     if(item.y<miny) miny=item.y;
                     if(item.x>maxx) maxx=item.x;
-                    if(item.y>maxy) maxy=item.y;
-                    console.log(item.y,miny);                
+                    if(item.y>maxy) maxy=item.y;               
                 }
             }
             
-            // Draw Tile
+            // Draw Mini Tile Surround Contour
             for(item of arr){        
                 if(item.no<=7){
                     c.fillStyle="#000";
                     c.fillRect(((xk-minx+item.x)*4)-1,((yk-miny+item.y)*4)-1,6,6);
                 }            
             }
+            // Draw Mini Tile Center            
             for(item of arr){        
                 if(item.no<=7){
                     c.fillStyle=pento.color;
@@ -387,7 +477,7 @@ function drawit()
                 }            
             }
 
-            console.log(pento.color,miny,maxy);
+            // console.log(pento.color,miny,maxy);
 
             yk+=(maxy-miny)+2;
             if(yk>180){
@@ -398,7 +488,7 @@ function drawit()
 
     }
 
-		// window.requestAnimationFrame(drawit);
+		window.requestAnimationFrame(drawit);
 }
 			
 		</script>
