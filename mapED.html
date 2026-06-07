@@ -366,73 +366,48 @@ function availableTile(xk,yk,setno,tileno)
 
 // Find Candidate by Going through all connectors and finding corresponding targets
 // 
+function candidateTile(setno,tileno)
+{
+    // Retrieve candidate tiles
+    var tileset=pentominos[0];
+    var items=tileset.pos[0];
 
+    // Only Connector Tiles
+    for(yk=0;yk<gridH;yk++){
+        for(xk=0;xk<gridW;xk++){
+            var state=mapp[yk][xk];
+            if(state.limit<8&&state.limit>0){
+                // Candidate Found
+                //highLightTile(xk,yk,"#000",true);
 
-function drawit()
-{	
-
-		c.clearRect(0,0,900,900);
-
-    // Draw grid
-    c.globalAlpha=0.5;
-    for(var i=0;i<=gridH;i++){
-        c.beginPath();
-        if(i==0||i==gridH){
-            c.strokeStyle="#F80";        
-        }else{
-            c.strokeStyle="#080";                
-        }
-        c.moveTo(gridOffs,gridOffs+(i*gridSize));
-        c.lineTo(gridOffs+(gridW*gridSize),gridOffs+(i*gridSize));
-        c.moveTo(gridOffs+(i*gridSize),gridOffs);
-        c.lineTo(gridOffs+(i*gridSize),gridOffs+(gridH*gridSize));
-        
-        c.stroke();
-    }
-
-    c.globalAlpha=1.0;
-
-    // Draw hud icon tiles
-    c.textBaseline="middle";
-    c.textAlign="center";
-    for(var i=1;i<13;i++){
-
-        drawTile(550,(i*gridSize),gridSize,gridSize,2,8,i);
-
-        if(i==currenttile){
-            pointlist=[{x:550,y:(i*gridSize)},{x:600,y:(i*gridSize)},{x:600,y:(gridSize)+(i*gridSize)},{x:550,y:(gridSize)+(i*gridSize)}];
-            c.strokeStyle="#68b";
-            c.lineWidth=2;
-            drawSegments(pointlist,true); 
-            c.lineWidth=1;   
-        }
-
-        c.fillStyle="#000";
-        c.fillText(i,550+(gridSize*0.5),(gridSize*0.5)+(i*gridSize));
-    }
-
-    // Redraw Tilemap
-    //for(item of tilemap){
-    //    drawTile((item.x+5)*gridSize,(item.y+5)*gridSize,gridSize,gridSize,2,8,item.no);
-    //}
-
-    placeTile(4,2,5,1);
-
-    // Update tilemap graphic
-    for(var yk=0;yk<gridH;yk++){
-        for(var xk=0;xk<gridW;xk++){
-            if(mapp[yk][xk].tileno>0) drawTile((xk*gridSize)+gridSize,(yk*gridSize)+gridSize,gridSize,gridSize,2,8,mapp[yk][xk].tileno);    
-            if(mapp[yk][xk].limit>0) drawLimit((xk*gridSize)+gridSize,(yk*gridSize)+gridSize,gridSize,gridSize,2,8,mapp[yk][xk].limit);    
+                // In for example U there are two matches and each has to be processed
+                for(itemo of items){
+                    if(itemo.no==state.limit){
+                        var dx=itemo.x;
+                        var dy=itemo.y;
+                        //console.log(dx,dy);
+                        for(item of items){
+                            // There can be more than one candidate
+                            if(item.no<8) highLightTile(xk+item.x-dx,yk+item.y-dy,"#000",true);                        
+                        }           
+                    }
+                }
+/*
+                for(itemo of items){
+                    // console.log(item);
+                    if(item.no<8){                    
+                        highLightTile(xk+itemo.x,yk+itemo.y,"#000",true);                    
+                    }
+                }
+  */
+            }
         }
     }
+ 
+}
 
-    availableTile(mx,my,5,1);
-
-    // Draw center tile
-    c.globalAlpha=0.5;
-    drawCirc(gridOffs+(gridW*gridSize*0.5),gridOffs+(gridH*gridSize*0.5),5,2,"#809");
-    c.globalAlpha=1.0;
-
+function drawMinis()
+{
     // HUD
     c,fillStyle="#343";
     c.font = "15px Arial Narrow";
@@ -477,8 +452,6 @@ function drawit()
                 }            
             }
 
-            // console.log(pento.color,miny,maxy);
-
             yk+=(maxy-miny)+2;
             if(yk>180){
                 xk+=7;
@@ -487,8 +460,116 @@ function drawit()
         }
 
     }
+}
 
-		window.requestAnimationFrame(drawit);
+function drawTileHud()
+{
+    // Draw hud icon tiles
+    c.textBaseline="middle";
+    c.textAlign="center";
+    for(var i=1;i<13;i++){
+
+        drawTile(550,(i*gridSize),gridSize,gridSize,2,8,i);
+
+        if(i==currenttile){
+            pointlist=[{x:550,y:(i*gridSize)},{x:600,y:(i*gridSize)},{x:600,y:(gridSize)+(i*gridSize)},{x:550,y:(gridSize)+(i*gridSize)}];
+            c.strokeStyle="#68b";
+            c.lineWidth=2;
+            drawSegments(pointlist,true); 
+            c.lineWidth=1;   
+        }
+
+        c.fillStyle="#000";
+        c.fillText(i,550+(gridSize*0.5),(gridSize*0.5)+(i*gridSize));
+    }
+}
+
+// Pentomino hud. Sub Icons for each possible tile
+function drawPentoHud()
+{
+    var hudX=550;
+    var hudY=50;
+
+    // We make one Y tile for each 
+    for(tileset of pentominos){
+        var iconX=hudX;
+        var co=0;
+        for(items of tileset.pos){
+            c.fillStyle="#484";
+            c.fillRect(iconX+2,hudY+2,gridSize-4,gridSize-4);
+            
+            var cx=tileset.center[co].cx;
+            var cy=tileset.center[co].cy;
+            co++;
+            console.log(cx,cy);
+
+            c.fillStyle="#000";
+            var miniSize=gridSize/5;
+            for(item of items){
+                if(item.no<8){
+                    c.fillRect(iconX+((item.x+cx)*miniSize),hudY+((item.y+cy)*miniSize),miniSize,miniSize);
+                }
+            }
+            iconX+=gridSize;
+        }
+        hudY+=gridSize;
+        if(hudY>350) return false;
+        //return false;
+    }
+}
+
+function drawit()
+{	
+
+		c.clearRect(0,0,900,900);
+
+    // Draw grid
+    c.globalAlpha=0.5;
+    for(var i=0;i<=gridH;i++){
+        c.beginPath();
+        if(i==0||i==gridH){
+            c.strokeStyle="#F80";        
+        }else{
+            c.strokeStyle="#080";                
+        }
+        c.moveTo(gridOffs,gridOffs+(i*gridSize));
+        c.lineTo(gridOffs+(gridW*gridSize),gridOffs+(i*gridSize));
+        c.moveTo(gridOffs+(i*gridSize),gridOffs);
+        c.lineTo(gridOffs+(i*gridSize),gridOffs+(gridH*gridSize));
+        
+        c.stroke();
+    }
+
+    c.globalAlpha=1.0;
+
+    // Redraw Tilemap
+    //for(item of tilemap){
+    //    drawTile((item.x+5)*gridSize,(item.y+5)*gridSize,gridSize,gridSize,2,8,item.no);
+    //}
+
+    drawPentoHud();
+
+    placeTile(2,2,3,1);
+
+    // Update tilemap graphic
+    for(var yk=0;yk<gridH;yk++){
+        for(var xk=0;xk<gridW;xk++){
+            if(mapp[yk][xk].tileno>0) drawTile((xk*gridSize)+gridSize,(yk*gridSize)+gridSize,gridSize,gridSize,2,8,mapp[yk][xk].tileno);    
+            if(mapp[yk][xk].limit>0) drawLimit((xk*gridSize)+gridSize,(yk*gridSize)+gridSize,gridSize,gridSize,2,8,mapp[yk][xk].limit);    
+        }
+    }
+
+    //availableTile(mx,my,5,1);
+    candidateTile(0,0);
+
+    // Draw center tile
+    c.globalAlpha=0.5;
+    drawCirc(gridOffs+(gridW*gridSize*0.5),gridOffs+(gridH*gridSize*0.5),5,2,"#809");
+    c.globalAlpha=1.0;
+
+    
+
+		// window.requestAnimationFrame(drawit);
 }
 			
 		</script>
