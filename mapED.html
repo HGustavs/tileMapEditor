@@ -18,6 +18,12 @@
         var mmx=310;
         var mmy=140;
 
+        // Selected / highlighted pentomino and tileset
+        var currSet=-1;
+        var currTile=-1;
+        var highSet=-1;
+        var highTile=-1;
+
 //------------------------------------=======############==========----------------------------------------
 //                                          Tilemap editor
 //------------------------------------=======############==========----------------------------------------
@@ -42,11 +48,23 @@ function mouseMove(e)
 
     mx = Math.floor((mx-gridOffs)/gridSize); // -Math.floor(gridW/2);
     my = Math.floor((my-gridOffs)/gridSize); // -Math.floor(gridH/2);
+
+    var found=false;
+    if(my>=0&&my<pentominos.length){
+        if((mx-10)>=0 && (mx-10)<pentominos[my].pos.length){
+            found=true;
+            highSet=my;
+            highTile=mx;
+        }
+    }
+    if(!found){
+        highSet=-1;
+        highTile=-1;
+    }
 }
 
- function mouseDown(e)
- {
-    e.preventDefault();
+function handleTileClick()
+{
     if(mx==6){
         if(my>=-4&&my<=7){
             currenttile=my+5;        
@@ -90,6 +108,20 @@ function mouseMove(e)
             tilemap=tmp;
         }
     }
+
+}
+
+ function mouseDown(e)
+ {
+    e.preventDefault();
+
+    // alert((mx-10)+" "+my+" ");
+    if(my>=0&&my<pentominos.length){
+        if((mx-10)>=0 && (mx-10)<pentominos[my].pos.length){
+            alert(pentominos[my].name+" "+(mx-10));
+        }
+    }
+
     return false;
  }
 
@@ -495,13 +527,17 @@ function drawPentoHud()
         var iconX=hudX;
         var co=0;
         for(items of tileset.pos){
+            c.fillStyle="#AA4";
+            c.fillRect(iconX+1,hudY+1,gridSize-2,gridSize-2);
             c.fillStyle="#484";
-            c.fillRect(iconX+2,hudY+2,gridSize-4,gridSize-4);
-            
+            c.fillRect(iconX+3,hudY+3,gridSize-6,gridSize-6);
+            c.fillStyle="#242";
+            c.fillRect(iconX+2,hudY+gridSize-3,gridSize-4,3);            
+
             var cx=tileset.center[co].cx;
             var cy=tileset.center[co].cy;
             co++;
-            console.log(cx,cy);
+            // console.log(co,cx,cy);
 
             c.fillStyle="#000";
             var miniSize=gridSize/5;
@@ -513,7 +549,7 @@ function drawPentoHud()
             iconX+=gridSize;
         }
         hudY+=gridSize;
-        if(hudY>350) return false;
+        if(hudY>600) return false;
         //return false;
     }
 }
@@ -575,6 +611,5 @@ function drawit()
 		</script>
 </head>
 <body onload="setup();" onkeydown="keydown(event);" onkeyup="keyup(event);" >
- 	<canvas id="myCanvas" width="900" height="900" style="border:1px solid #000000;"></canvas>
-	<svg style='border:1px dotted red;' height="900" width="900" id="mainsvg"></svg>
+ 	<canvas id="myCanvas" width="1000" height="900" style="border:1px solid #000000;"></canvas>
 </body>
