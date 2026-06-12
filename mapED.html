@@ -54,7 +54,7 @@ function mouseMove(e)
         if((mx-10)>=0 && (mx-10)<pentominos[my].pos.length){
             found=true;
             highSet=my;
-            highTile=mx;
+            highTile=mx-10;
         }
     }
     if(!found){
@@ -118,7 +118,8 @@ function handleTileClick()
     // alert((mx-10)+" "+my+" ");
     if(my>=0&&my<pentominos.length){
         if((mx-10)>=0 && (mx-10)<pentominos[my].pos.length){
-            alert(pentominos[my].name+" "+(mx-10));
+            currSet=my;
+            currTile=mx-10;
         }
     }
 
@@ -516,6 +517,10 @@ function drawTileHud()
     }
 }
 
+// Styling function (global styling state)
+
+// Revert Styling (center)
+
 // Pentomino hud. Sub Icons for each possible tile
 function drawPentoHud()
 {
@@ -549,15 +554,31 @@ function drawPentoHud()
             iconX+=gridSize;
         }
         hudY+=gridSize;
-        if(hudY>600) return false;
-        //return false;
+    }
+    
+    // Draw Highlight on top of tiles
+    if(highSet>=0&&highTile>=0){
+        c.globalAlpha=0.5;
+        c.strokeStyle="#6dd";
+        c.lineWidth=5;
+        c.strokeRect(550+(highTile*gridSize),((highSet+1)*gridSize),gridSize,gridSize);
+        c.lineWidth=1;
+        c.globalAlpha=1.0;
+    }
+    if(currSet>=0&&currTile>=0){
+        c.globalAlpha=0.5;
+        c.strokeStyle="#d6d";
+        c.lineWidth=5;
+        c.strokeRect(550+(currTile*gridSize),((currSet+1)*gridSize),gridSize,gridSize);
+        c.lineWidth=1;
+        c.globalAlpha=1.0;    
     }
 }
 
 function drawit()
 {	
 
-		c.clearRect(0,0,900,900);
+		c.clearRect(0,0,1000,900);
 
     // Draw grid
     c.globalAlpha=0.5;
@@ -605,7 +626,7 @@ function drawit()
 
     
 
-		// window.requestAnimationFrame(drawit);
+		window.requestAnimationFrame(drawit);
 }
 			
 		</script>
