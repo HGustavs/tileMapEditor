@@ -4,6 +4,7 @@
 				body {margin: 0; height: 100%; overflow: hidden}
 		</style>
     <script>document.write("<script type='text/javascript' src='pento.js?t=" + Date.now() + "'><\/script>");</script>
+    <script>document.write("<script type='text/javascript' src='../Challenges/helperFunction/icons.js?t=" + Date.now() + "'><\/script>");</script>
 		<script>
 
         //        (\ /)
@@ -13,7 +14,7 @@
         // Pentomino ED
         // https://en.wikipedia.org/wiki/Pentomino
 
-				var c;
+				var c,ctx;
         var mx=0,my=0;
         var mmx=310;
         var mmy=140;
@@ -42,6 +43,7 @@ const TILEDRAW=0;
 
 const CROSSTILE=16;
 const NORMATILE=15;
+const LIMITTILE=14;
 
 const HUDCOL=10;
 
@@ -59,12 +61,20 @@ function mouseMove(e)
     mx = Math.floor((mx-gridOffs)/gridSize); // -Math.floor(gridW/2);
     my = Math.floor((my-gridOffs)/gridSize); // -Math.floor(gridH/2);
 
+    var xoffs=0;
+    if(mode==TILESET){
+        // Tile Set Drawing Mode 
+        xoffs=11;
+    }else{
+        xoffs=10;
+    }
+
     var found=false;
     if(my>=0&&my<pentominos.length){
-        if((mx-10)>=0 && (mx-10)<pentominos[my].pos.length){
+        if((mx-xoffs)>=0 && (mx-xoffs)<pentominos[my].pos.length){
             found=true;
             highSet=my;
-            highTile=mx-10;
+            highTile=mx-xoffs;
         }
     }
     if(!found){
@@ -122,6 +132,17 @@ function handleTileClick()
 
 }
 
+// Reads tile on given coordinate
+function readTile(xk,yk)
+{
+    // We return tile 
+    if(xk>=0&&xk<gridW&&yk>=0&&yk<gridH){
+        return mapp[yk][xk].tileno;
+    }else{
+        return -1;
+    }
+}
+
  function mouseDown(e)
  {
     e.preventDefault();
@@ -130,30 +151,84 @@ function handleTileClick()
         // Tile Drawing Mode
         if(my>=0&&my<pentominos.length){
             if((mx-10)>=0 && (mx-10)<pentominos[my].pos.length){
-                currSet=my;
+                currSet=my+1;
                 currTile=mx-10;
             }
         }    
     }else{
         // Tile set Painting Mode
-
-        if(e.button==0){
-            alert("Update Limit!");
-        }
-
         if(e.button==2){
-            mapp[my][mx].tileno=0;
-            mapp[my][mx].limit=0;
+            if(mx>HUDCOL&&my>=0&&my<=12){
+
+            }else{
+                if(mx>=0&&mx<gridW&&my>=0&&my<gridH){
+                    mapp[my][mx].tileno=0;
+                    mapp[my][mx].limit=0;
+                }
+            }
         }else if(e.button==0){
+            if(mx==HUDCOL&&my==-1){
+                alert("Save!");
+            }
+            if(mx>HUDCOL&&my>=0&&my<=12){
+
+                // Check if inside pentomenu
+                var xoffs=11;
+                if(my>=0&&my<pentominos.length){
+                    if((mx-xoffs)>=0 && (mx-xoffs)<pentominos[my].pos.length){
+                        // This is the one we clear
+                        clearMAPP();
+                        placeTile(4,4,my,mx-xoffs);
+                    }
+                }
+            }
             if(mx<HUDCOL&&mx>0&&my>0&&my<9&&currSet>0){
-                mapp[my][mx].tileno=currSet+1;
-                mapp[my][mx].limit=0;
+                if(currSet==LIMITTILE){
+                    var tileBelow=readTile(mx,my+1);
+                    var tileAbove=readTile(mx,my-1);
+                    var tileLeft=readTile(mx-1,my);
+                    var tileRight=readTile(mx+1,my);
+
+                    var limit=[];
+
+                    console.log(mx,my,tileBelow,tileAbove,tileLeft,tileRight);
+
+                    // BELOW 1 5 6 9  11 12 13
+                    if(tileBelow==1||tileBelow==5||tileBelow==6||tileBelow==9||tileBelow==11||tileBelow==12||tileBelow==13){
+                        // Then this tile is limited to 2 7 8 10 11 12 13 (the opposite connector)
+                        limit=[2, 7, 8, 10, 11, 12, 13];
+                    }
+                    
+                    // ABOVE 2 7 8 10 11 12 13 
+                    if(tileAbove==2||tileAbove==7||tileAbove==8||tileAbove==10||tileAbove==11||tileAbove==12||tileAbove==13){
+                        // Then this tile is limited to 1 5 6 9  11 12 13 (the opposite connector)
+                        limit=[1, 5, 6, 9,  11, 12, 13];
+                    }
+                    
+                    // LEFT  4 6 8 9  10 12 13
+                    if(tileLeft==4||tileLeft==6||tileLeft==8||tileLeft==9||tileLeft==10||tileLeft==12||tileLeft==13){
+                        // Then this tile is limited to 1 5 6 9  11 12 13 (the opposite connector)
+                        limit=[3, 5, 7, 9,  10, 11, 13];
+                    }
+                    
+                    // RIGHT 3 5 7 9  10 11 13
+                    if(tileRight==3||tileRight==5||tileRight==7||tileRight==9||tileRight==10||tileRight==11||tileRight==13){
+                        // Then this tile is limited to 4 6 8 9  10 12 13 (the opposite connector)
+                        limit=[4, 6, 8, 9,  10, 12, 13];
+                    }
+
+                    mapp[my][mx].tileno=currSet;
+                    mapp[my][mx].limit=limit;             
+
+                }else{
+                    mapp[my][mx].tileno=currSet;
+                    mapp[my][mx].limit=[];                
+                }
             }        
         }
 
-        if(mx==HUDCOL){
-          alert("TILEMODE "+mx+" "+my+" "+e.button);
-          currSet=my;
+        if(mx==HUDCOL&&my>-1){
+          currSet=my+1;
         }
     }
 
@@ -180,30 +255,36 @@ function keyup(e)
 		}else if(e.keyCode==38||e.keyCode==40){
 				yd=0;
 		}
-}			
+}	
 
-function setup()
+function clearMAPP()
 {
-		var cc = document.getElementById("myCanvas");
-    c = cc.getContext("2d");
-
-    cc.addEventListener('contextmenu', event => event.preventDefault());
-    cc.addEventListener('mousemove',function(e){mouseMove(e)});
-    cc.addEventListener('mousedown',function(e){mouseDown(e)});
-
     // Initiate mapp
     for(var j=0;j<gridH;j++){
         mapp[j]=[];
         for(var i=0;i<gridW;i++){
             // No limit
-            var limit=0;
- 
-            //var mapno=Math.floor((Math.random()*8)+1);
-            mapp[j][i]={xk:i,yk:j,limit:0,tileno:0};
+            var limit=[];
+
+            // Create data object
+            mapp[j][i]={xk:i,yk:j,limit:limit,tileno:0};
         }
     }
+}
 
-    placeTile(5,5,0,0);
+function setup()
+{
+		var cc = document.getElementById("myCanvas");
+    c = cc.getContext("2d");
+    ctx = cc.getContext("2d");
+
+    cc.addEventListener('contextmenu', event => event.preventDefault());
+    cc.addEventListener('mousemove',function(e){mouseMove(e)});
+    cc.addEventListener('mousedown',function(e){mouseDown(e)});
+
+    clearMAPP();
+
+    placeTile(5,4,2,0);
 	
 		drawit();
 }
@@ -319,10 +400,10 @@ function drawLimit(x,y,tileW,tileH,linewidth,lineoffs,tileno)
 }
 
 // We draw a tile with the following characteristics 
-function drawTile(x,y,tileW,tileH,linewidth,lineoffs,tileno)
+function drawTile(x,y,tileW,tileH,linewidth,lineoffs,tileno,limitlist)
 {   
     var lo=lineoffs*0.25;
-    if(tileno>15){
+    if(tileno==LIMITTILE||tileno==CROSSTILE){
         c.fillStyle="#68b";        
     }else{
         c.fillStyle="#b86";    
@@ -330,29 +411,74 @@ function drawTile(x,y,tileW,tileH,linewidth,lineoffs,tileno)
     pointlist=[{x:x+lo,y:y+lo},{x:x+lo,y:y+tileH-lo},{x:x+tileW-lo,y:y+tileH-lo},{x:x+tileW-lo,y:y+lo}];
     drawSegments(pointlist,false);
 
-    if(tileno==16){
+    if(tileno==CROSSTILE){
         drawCross(x+(tileW*0.5),y+(tileH*0.5),tileW*0.15,linewidth*0.5,"#A40");
+    }
+    if(tileno==LIMITTILE){
+        // Draw all of the limits
+        var soffs=tileW/6;
+        var boffs=tileW/3;
+
+        c.fillStyle="#343";
+        c.font = Math.floor(boffs*0.9)+"px Arial Narrow";
+        c.textBaseline="middle";
+        c.textAlign="center";
+
+        var ly=0;
+        var lx=0;
+        for(var limitno of limitlist){
+            c.fillText(limitno,x+soffs+(lx*boffs),y+soffs+(ly*boffs));
+            lx++;
+            if(lx>2){
+                lx=0;
+                ly++;
+            }            
+        }
     }
     if(tileno==1||tileno==5||tileno==6||tileno==6||tileno==9||tileno==11||tileno==12||tileno==13){
         // Top connectior
-        drawThickLine( x+(tileW*0.5)-(lineoffs*0.5),y, x+(tileW*0.5)-(lineoffs),y+(lineoffs*2), linewidth, "#000");
-        drawThickLine( x+(tileW*0.5)+(lineoffs),y,x+(tileW*0.5)+(lineoffs*0.5),y+(lineoffs*2), linewidth, "#000");
+        drawThickLine( x+(tileW*0.5)-(lineoffs*0.5),y, x+(tileW*0.5)-(lineoffs*1.0),y+(lineoffs*2), linewidth, "#000");
+        drawThickLine( x+(tileW*0.5)+(lineoffs*1.0),y,x+(tileW*0.5)+(lineoffs*0.5),y+(lineoffs*2), linewidth, "#000");
+        drawThickLine( x+(tileW*0.5)-(lineoffs*2.0),y, x+(tileW*0.5)-(lineoffs*2.5),y+(lineoffs*2), linewidth, "#000");
+        drawThickLine( x+(tileW*0.5)+(lineoffs*2.5),y,x+(tileW*0.5)+(lineoffs*2.0),y+(lineoffs*2), linewidth, "#000");
+        drawThickLine( x+(tileW*0.5)-(lineoffs*3.5),y, x+(tileW*0.5)-(lineoffs*4.0),y+(lineoffs*2), linewidth, "#000");
+        drawThickLine( x+(tileW*0.5)+(lineoffs*4.0),y,x+(tileW*0.5)+(lineoffs*3.5),y+(lineoffs*2), linewidth, "#000");
     }
     if(tileno==2||tileno==7||tileno==8||tileno==10||tileno==11||tileno==12||tileno==13){
         // Bottom connectior
-        drawThickLine( x+(tileW*0.5)-(lineoffs),y+tileH,x+(tileW*0.5)-(lineoffs*0.5),y+tileH-(lineoffs*2), linewidth, "#000");
-        drawThickLine( x+(tileW*0.5)+(lineoffs*0.5),y+tileH,x+(tileW*0.5)+(lineoffs),y+tileH-(lineoffs*2), linewidth, "#000");
+        drawThickLine( x+(tileW*0.5)-(lineoffs*1.0),y+tileH,x+(tileW*0.5)-(lineoffs*0.5),y+tileH-(lineoffs*2), linewidth, "#000");
+        drawThickLine( x+(tileW*0.5)+(lineoffs*0.5),y+tileH,x+(tileW*0.5)+(lineoffs*1.0),y+tileH-(lineoffs*2), linewidth, "#000");
+        drawThickLine( x+(tileW*0.5)-(lineoffs*2.5),y+tileH,x+(tileW*0.5)-(lineoffs*2.0),y+tileH-(lineoffs*2), linewidth, "#000");
+        drawThickLine( x+(tileW*0.5)+(lineoffs*2.0),y+tileH,x+(tileW*0.5)+(lineoffs*2.5),y+tileH-(lineoffs*2), linewidth, "#000");
+        drawThickLine( x+(tileW*0.5)-(lineoffs*4.0),y+tileH,x+(tileW*0.5)-(lineoffs*3.5),y+tileH-(lineoffs*2), linewidth, "#000");
+        drawThickLine( x+(tileW*0.5)+(lineoffs*3.5),y+tileH,x+(tileW*0.5)+(lineoffs*4.0),y+tileH-(lineoffs*2), linewidth, "#000");
     }
     if(tileno==3||tileno==5||tileno==7||tileno==9||tileno==10||tileno==11||tileno==13){
         // Left connectior
-        drawThickLine( x,y+(tileH*0.5)-(lineoffs),x+(lineoffs*2), y+(tileH*0.5)-(lineoffs*0.5), linewidth, "#000");
-        drawThickLine( x,y+(tileH*0.5)+(lineoffs*0.5),x+(lineoffs*2), y+(tileH*0.5)+(lineoffs), linewidth, "#000");
+        drawThickLine( x,y+(tileH*0.5)-(lineoffs*1.0),x+(lineoffs*2), y+(tileH*0.5)-(lineoffs*0.5), linewidth, "#000");
+        drawThickLine( x,y+(tileH*0.5)+(lineoffs*0.5),x+(lineoffs*2), y+(tileH*0.5)+(lineoffs*1.0), linewidth, "#000");
+        drawThickLine( x,y+(tileH*0.5)-(lineoffs*2.5),x+(lineoffs*2), y+(tileH*0.5)-(lineoffs*2.0), linewidth, "#000");
+        drawThickLine( x,y+(tileH*0.5)+(lineoffs*2.0),x+(lineoffs*2), y+(tileH*0.5)+(lineoffs*2.5), linewidth, "#000");
+    }
+    if(tileno==3||tileno==7||tileno==10){
+        drawThickLine( x,y+(tileH*0.5)-(lineoffs*4.0),x+(lineoffs*2), y+(tileH*0.5)-(lineoffs*3.5), linewidth, "#000");
+    }
+    if(tileno==3||tileno==5||tileno==9){
+        drawThickLine( x,y+(tileH*0.5)+(lineoffs*3.5),x+(lineoffs*2), y+(tileH*0.5)+(lineoffs*4.0), linewidth, "#000");
     }
     if(tileno==4||tileno==6||tileno==8||tileno==9||tileno==10||tileno==12||tileno==13){
         // Right connectior
-        drawThickLine( x+tileW,y+(tileH*0.5)-(lineoffs*0.5),x+tileW-(lineoffs*2), y+(tileH*0.5)-(lineoffs), linewidth, "#000");
-        drawThickLine( x+tileW,y+(tileH*0.5)+(lineoffs),x+tileW-(lineoffs*2), y+(tileH*0.5)+(lineoffs*0.5), linewidth, "#000");
+        drawThickLine( x+tileW,y+(tileH*0.5)-(lineoffs*0.5),x+tileW-(lineoffs*2), y+(tileH*0.5)-(lineoffs*1.0), linewidth, "#000");
+        drawThickLine( x+tileW,y+(tileH*0.5)+(lineoffs*1.0),x+tileW-(lineoffs*2), y+(tileH*0.5)+(lineoffs*0.5), linewidth, "#000");
+        drawThickLine( x+tileW,y+(tileH*0.5)-(lineoffs*2.0),x+tileW-(lineoffs*2), y+(tileH*0.5)-(lineoffs*2.5), linewidth, "#000");
+        drawThickLine( x+tileW,y+(tileH*0.5)+(lineoffs*2.5),x+tileW-(lineoffs*2), y+(tileH*0.5)+(lineoffs*2.0), linewidth, "#000");
     }
+    if(tileno==4||tileno==8||tileno==10){
+        drawThickLine( x+tileW,y+(tileH*0.5)-(lineoffs*3.5),x+tileW-(lineoffs*2), y+(tileH*0.5)-(lineoffs*4.0), linewidth, "#000");
+    }
+    if(tileno==4||tileno==6||tileno==9){
+        drawThickLine( x+tileW,y+(tileH*0.5)+(lineoffs*4.0),x+tileW-(lineoffs*2), y+(tileH*0.5)+(lineoffs*3.5), linewidth, "#000");   
+    }    
 }
 
 function highLightTile(xk,yk,color,fillmode,alpha)
@@ -361,10 +487,10 @@ function highLightTile(xk,yk,color,fillmode,alpha)
     c.lineWidth=4; 
     if(fillmode){
         c.fillStyle=color;
-        c.fillRect((xk*gridSize)+gridSize,(yk*gridSize)+gridSize,gridSize,gridSize);
+        c.fillRect((xk*gridSize)+gridSize,(yk*gridSize),gridSize,gridSize);
     }else{
         c.strokeStyle=color;
-        c.strokeRect((xk*gridSize)+gridSize,(yk*gridSize)+gridSize,gridSize,gridSize);    
+        c.strokeRect((xk*gridSize)+gridSize,(yk*gridSize),gridSize,gridSize);    
     }
     c.globalAlpha=1.0;
 }
@@ -387,8 +513,12 @@ function placeTile(xk,yk,setno,tileno)
     var tileset=pentominos[setno];
     var items=tileset.pos[tileno];
 
+    alert(setno+" "+tileno);
+
+    console.log(pentominos[setno].pos[tileno]);
+
     // We update tilemap to fit each item
-    for(item of items){
+    for(item of pentominos[setno].pos[tileno]){
         if(item.no<16){
             //if(item.no>8) item.no=0;        
             if(item.no>8) item.no=0;
@@ -401,10 +531,10 @@ function placeTile(xk,yk,setno,tileno)
             }
 
             mapp[yk+item.y][xk+item.x].tileno=item.no;   
-            mapp[yk+item.y][xk+item.x].limit=8;     
+            mapp[yk+item.y][xk+item.x].limit=[];     
         }else{
             // We set limit to either 8 (no admittance) or to mirror of link tile
-            mapp[yk+item.y][xk+item.x].limit=convertLimit(item.no);
+            mapp[yk+item.y][xk+item.x].limit=[];
         }
     }
 }
@@ -488,7 +618,7 @@ function candidateTile(setno,tileno)
 function drawMinis()
 {
     // HUD
-    c,fillStyle="#343";
+    c.fillStyle="#343";
     c.font = "15px Arial Narrow";
     c.fillText(mx+" "+my,550,40);
 
@@ -546,9 +676,19 @@ function drawTileHud()
     // Draw hud icon tiles
     c.textBaseline="middle";
     c.textAlign="center";
+
+    // Draw Floppy
+    c.save();
+    c.translate(556,8);
+    floppy();
+    c.restore();
+
+    // Draw Minis for selected tileset next to floppy
+
+    
     for(var i=1;i<17;i++){
 
-        drawTile(550,(i*gridSize),gridSize,gridSize,2,8,i);
+        drawTile(550,(i*gridSize),gridSize,gridSize,1.5,5,i,[]);
 
         if(i==currSet){
             highLightTile(10,i,"#46b",false,1.0);
@@ -564,10 +704,8 @@ function drawTileHud()
 // Revert Styling (center)
 
 // Pentomino hud. Sub Icons for each possible tile
-function drawPentoHud()
+function drawPentoHud(hudX,hudY)
 {
-    var hudX=550;
-    var hudY=50;
 
     // We make one Y tile for each 
     for(tileset of pentominos){
@@ -603,7 +741,7 @@ function drawPentoHud()
         c.globalAlpha=0.5;
         c.strokeStyle="#6dd";
         c.lineWidth=5;
-        c.strokeRect(550+(highTile*gridSize),((highSet+1)*gridSize),gridSize,gridSize);
+        c.strokeRect(hudX+(highTile*gridSize),((highSet+1)*gridSize),gridSize,gridSize);
         c.lineWidth=1;
         c.globalAlpha=1.0;
     }
@@ -611,7 +749,7 @@ function drawPentoHud()
         c.globalAlpha=0.5;
         c.strokeStyle="#d6d";
         c.lineWidth=5;
-        c.strokeRect(550+(currTile*gridSize),((currSet+1)*gridSize),gridSize,gridSize);
+        c.strokeRect(hudX+(currTile*gridSize),((currSet+1)*gridSize),gridSize,gridSize);
         c.lineWidth=1;
         c.globalAlpha=1.0;    
     }
@@ -646,15 +784,18 @@ function drawit()
     //    drawTile((item.x+5)*gridSize,(item.y+5)*gridSize,gridSize,gridSize,2,8,item.no);
     //}
 
-    if (mode==TILEDRAW) drawPentoHud();
-    if (mode==TILESET) drawTileHud();
+    if (mode==TILEDRAW) drawPentoHud(550,50);
+    if (mode==TILESET){
+        drawTileHud();
+        drawPentoHud(600,50);
+    }
 
     //placeTile(2,2,3,1);
 
     // Update tilemap graphic
     for(var yk=0;yk<gridH;yk++){
         for(var xk=0;xk<gridW;xk++){
-            if(mapp[yk][xk].tileno>0) drawTile((xk*gridSize)+gridSize,(yk*gridSize)+gridSize,gridSize,gridSize,2,8,mapp[yk][xk].tileno);    
+            if(mapp[yk][xk].tileno>0) drawTile((xk*gridSize)+gridSize,(yk*gridSize)+gridSize,gridSize,gridSize,1.5,5,mapp[yk][xk].tileno,mapp[yk][xk].limit);    
             //if(mapp[yk][xk].limit>0) drawLimit((xk*gridSize)+gridSize,(yk*gridSize)+gridSize,gridSize,gridSize,2,8,mapp[yk][xk].limit);    
         }
     }
