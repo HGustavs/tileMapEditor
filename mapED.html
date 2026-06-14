@@ -83,55 +83,6 @@ function mouseMove(e)
     }
 }
 
-function handleTileClick()
-{
-    alert(mx+" "+my);
-    if(mx==6){
-        if(my>=-4&&my<=7){
-            currenttile=my+5;        
-        }
-        if(my==-5){
-            str="[ ";
-            var i=0;
-            for(item of tilemap){
-                if(i>0) str+=", ";
-                str+="{";
-                str+="x:"+item.x;
-                str+=",y:"+item.y;
-                str+=",no:"+item.no;
-                str+="}";
-                i++;
-            }            
-            str+=" ]";
-            alert(str);
-        }
-    }else{
-        if(e.buttons==1){
-            // Update tile
-            for(item of tilemap){
-                // If item is found
-                if(item.x==mx&&item.y==my){
-                    item.no=currenttile;
-                    return false;
-                }
-            }
-            if(mx>=-4&&mx<=4&&my>=-4&&my<=4){
-                tilemap.push({x:mx,y:my,no:currenttile});
-            }
-        }else if(e.buttons==2){
-            var tmp=[];
-            for(item of tilemap){
-                // If item is found
-                if(!(item.x==mx&&item.y==my)){
-                    tmp.push(item);
-                }
-            }
-            tilemap=tmp;
-        }
-    }
-
-}
-
 // Reads tile on given coordinate
 function readTile(xk,yk)
 {
@@ -168,7 +119,34 @@ function readTile(xk,yk)
             }
         }else if(e.button==0){
             if(mx==HUDCOL&&my==-1){
-                alert("Save!");
+                //alert("Save!");
+                
+                var str="";
+                str="[ ";
+                var i=0;
+                for(var yk=0;yk<gridH;yk++){
+                    for(var xk=0;xk<gridW;xk++){
+                        if (mapp[yk][xk].tileno>0){
+                            if(i>0) str+=", ";
+                            str+="{";
+                            str+="x:"+(xk-4);
+                            str+=",y:"+(yk-4);
+                            str+=",no:"+mapp[yk][xk].tileno;
+                            str+=",limit: [";
+                            if(mapp[yk][xk].limit!==undefined){
+                                for(var j=0;j<mapp[yk][xk].limit.length;j++){
+                                    if(j>0) str+=", ";
+                                    str+=mapp[yk][xk].limit[j];
+                                }
+                            }
+                            str+="]";
+                            str+="}";
+                            i++;
+                        }
+                    }
+                }
+                str+=" ]";
+                alert(str);
             }
             if(mx>HUDCOL&&my>=0&&my<=12){
 
@@ -190,8 +168,6 @@ function readTile(xk,yk)
                     var tileRight=readTile(mx+1,my);
 
                     var limit=[];
-
-                    console.log(mx,my,tileBelow,tileAbove,tileLeft,tileRight);
 
                     // BELOW 1 5 6 9  11 12 13
                     if(tileBelow==1||tileBelow==5||tileBelow==6||tileBelow==9||tileBelow==11||tileBelow==12||tileBelow==13){
@@ -284,7 +260,7 @@ function setup()
 
     clearMAPP();
 
-    placeTile(5,4,2,0);
+    //placeTile(4,4,2,0);
 	
 		drawit();
 }
@@ -513,14 +489,13 @@ function placeTile(xk,yk,setno,tileno)
     var tileset=pentominos[setno];
     var items=tileset.pos[tileno];
 
-    alert(setno+" "+tileno);
-
-    console.log(pentominos[setno].pos[tileno]);
-
     // We update tilemap to fit each item
     for(item of pentominos[setno].pos[tileno]){
-        if(item.no<16){
-            //if(item.no>8) item.no=0;        
+        if(item.no<17){
+            //if(item.no>8) item.no=0; 
+
+            // Old style
+            /*   
             if(item.no>8) item.no=0;
             if(item.no==8) item.no=16;
             if(item.no==7) item.no=15;
@@ -529,9 +504,10 @@ function placeTile(xk,yk,setno,tileno)
                 if(tmp==3) item.no=4;
                 if(tmp==4) item.no=3;
             }
+            */
 
             mapp[yk+item.y][xk+item.x].tileno=item.no;   
-            mapp[yk+item.y][xk+item.x].limit=[];     
+            mapp[yk+item.y][xk+item.x].limit=item.limit;     
         }else{
             // We set limit to either 8 (no admittance) or to mirror of link tile
             mapp[yk+item.y][xk+item.x].limit=[];
@@ -727,7 +703,7 @@ function drawPentoHud(hudX,hudY)
             c.fillStyle="#000";
             var miniSize=gridSize/5;
             for(item of items){
-                if(item.no<8){
+                if(item.no<16&&item.no!=14){
                     c.fillRect(iconX+((item.x+cx)*miniSize),hudY+((item.y+cy)*miniSize),miniSize,miniSize);
                 }
             }
