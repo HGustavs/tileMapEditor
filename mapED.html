@@ -24,6 +24,8 @@
         var currTile=-1;
         var highSet=-1;
         var highTile=-1;
+        var highXk=-1;
+        var highYk=-1;
 
 //------------------------------------=======############==========----------------------------------------
 //                                          Tilemap editor
@@ -50,7 +52,6 @@ const HUDCOL=10;
 
 var mode=TILEDRAW;
 
-
 var currenttile=2;                          // Current chosen tile
 
 function mouseMove(e)
@@ -69,6 +70,11 @@ function mouseMove(e)
     }else{
         xoffs=10;
     }
+
+    highXk=mx;
+    highYk=my;
+    if(mode==TILEDRAW){
+    }    
 
     var found=false;
     if(my>=0&&my<pentominos.length){
@@ -460,10 +466,10 @@ function drawTile(x,y,tileW,tileH,linewidth,lineoffs,tileno,limitlist)
     }    
 }
 
-function highLightTile(xk,yk,color,fillmode,alpha)
+function highLightTile(xk,yk,color,fillmode,alpha,linewidth)
 {
     c.globalAlpha=alpha;
-    c.lineWidth=4; 
+    c.lineWidth=linewidth; 
     if(fillmode){
         c.fillStyle=color;
         c.fillRect((xk*gridSize)+gridSize,(yk*gridSize),gridSize,gridSize);
@@ -472,6 +478,7 @@ function highLightTile(xk,yk,color,fillmode,alpha)
         c.strokeRect((xk*gridSize)+gridSize,(yk*gridSize),gridSize,gridSize);    
     }
     c.globalAlpha=1.0;
+    c.lineWidth=1; 
 }
 
 function convertLimit(limit)
@@ -650,17 +657,13 @@ function drawTileHud()
     floppy();
     c.restore();
 
-    // Draw Minis for selected tileset next to floppy
-
-    
+    // Draw Minis for selected tileset next to floppy    
     for(var i=1;i<17;i++){
 
         drawTile(550,(i*gridSize),gridSize,gridSize,1.5,5,i,[]);
-
         if(i==currSet){
-            highLightTile(10,i,"#46b",false,1.0);
+            highLightTile(10,i,"#46b",false,1.0,6);
         }
-
         c.fillStyle="#000";
         c.fillText(i,550+(gridSize*0.5),(gridSize*0.5)+(i*gridSize));
     }
@@ -705,20 +708,10 @@ function drawPentoHud(hudX,hudY)
     
     // Draw Highlight on top of tiles
     if(highSet>=0&&highTile>=0){
-        c.globalAlpha=0.5;
-        c.strokeStyle="#6dd";
-        c.lineWidth=5;
-        c.strokeRect(hudX+(highTile*gridSize),((highSet+1)*gridSize),gridSize,gridSize);
-        c.lineWidth=1;
-        c.globalAlpha=1.0;
+        highLightTile(highTile+10,highSet+1,"#6dd",false,0.8,5.0);
     }
     if(currSet>=0&&currTile>=0){
-        c.globalAlpha=0.5;
-        c.strokeStyle="#d6d";
-        c.lineWidth=5;
-        c.strokeRect(hudX+(currTile*gridSize),((currSet+1)*gridSize),gridSize,gridSize);
-        c.lineWidth=1;
-        c.globalAlpha=1.0;    
+        highLightTile(currTile+10,currSet+1,"#d6d",false,0.8,5.0);
     }
 }
 
@@ -746,24 +739,16 @@ function drawit()
 
     c.globalAlpha=1.0;
 
-    // Redraw Tilemap
-    //for(item of tilemap){
-    //    drawTile((item.x+5)*gridSize,(item.y+5)*gridSize,gridSize,gridSize,2,8,item.no);
-    //}
-
     if (mode==TILEDRAW) drawPentoHud(550,50);
     if (mode==TILESET){
         drawTileHud();
         drawPentoHud(600,50);
     }
 
-    //placeTile(2,2,3,1);
-
     // Update tilemap graphic
     for(var yk=0;yk<gridH;yk++){
         for(var xk=0;xk<gridW;xk++){
             if(mapp[yk][xk].tileno>0) drawTile((xk*gridSize)+gridSize,(yk*gridSize)+gridSize,gridSize,gridSize,1.5,5,mapp[yk][xk].tileno,mapp[yk][xk].limit);    
-            //if(mapp[yk][xk].limit>0) drawLimit((xk*gridSize)+gridSize,(yk*gridSize)+gridSize,gridSize,gridSize,2,8,mapp[yk][xk].limit);    
         }
     }
 
@@ -779,7 +764,10 @@ function drawit()
     drawCirc(gridOffs+(gridW*gridSize*0.5),gridOffs+(gridH*gridSize*0.5),5,2,"#809");
     c.globalAlpha=1.0;
 
-    
+    // Draw drawing area highlight if available
+    if(highXk>-1&&highYk>-1){
+
+    }
 
 		window.requestAnimationFrame(drawit);
 }
