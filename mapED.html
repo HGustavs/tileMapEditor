@@ -37,6 +37,7 @@ const gridH=9;
 
 var tilemap=[];
 var mapp=[];
+var conn=[];
 
 const TILESET=1;
 const TILEDRAW=0;
@@ -47,7 +48,7 @@ const LIMITTILE=14;
 
 const HUDCOL=10;
 
-var mode=TILESET;
+var mode=TILEDRAW;
 
 
 var currenttile=2;                          // Current chosen tile
@@ -102,10 +103,13 @@ function readTile(xk,yk)
         // Tile Drawing Mode
         if(my>=0&&my<pentominos.length){
             if((mx-10)>=0 && (mx-10)<pentominos[my].pos.length){
-                currSet=my+1;
+                currSet=my;
                 currTile=mx-10;
             }
-        }    
+        }
+        if(my>=0&&mx<gridW&&mx>=0&&my<gridH){
+            placeTile(mx,my,currSet,currTile);    
+        }
     }else{
         // Tile set Painting Mode
         if(e.button==2){
@@ -259,8 +263,7 @@ function setup()
     cc.addEventListener('mousedown',function(e){mouseDown(e)});
 
     clearMAPP();
-
-    //placeTile(4,4,2,0);
+    placeTile(4,4,0,0);
 	
 		drawit();
 }
@@ -492,25 +495,16 @@ function placeTile(xk,yk,setno,tileno)
     // We update tilemap to fit each item
     for(item of pentominos[setno].pos[tileno]){
         if(item.no<17){
-            //if(item.no>8) item.no=0; 
-
-            // Old style
-            /*   
-            if(item.no>8) item.no=0;
-            if(item.no==8) item.no=16;
-            if(item.no==7) item.no=15;
-            if(item.no==3||item.no==4){
-                var tmp=item.no;
-                if(tmp==3) item.no=4;
-                if(tmp==4) item.no=3;
+            // If tile is inside limits
+            if((yk+item.y)>=0&&(yk+item.y)<gridH&&(xk+item.x)>=0&&(xk+item.x)<gridW){
+                mapp[yk+item.y][xk+item.x].tileno=item.no;   
+                mapp[yk+item.y][xk+item.x].limit=item.limit;
             }
-            */
-
-            mapp[yk+item.y][xk+item.x].tileno=item.no;   
-            mapp[yk+item.y][xk+item.x].limit=item.limit;     
         }else{
             // We set limit to either 8 (no admittance) or to mirror of link tile
-            mapp[yk+item.y][xk+item.x].limit=[];
+            if((yk+item.y)>=0&&(yk+item.y)<gridH&&(xk+item.x)>=0&&(xk+item.x)<gridW){
+                mapp[yk+item.y][xk+item.x].limit=[];
+            }
         }
     }
 }
@@ -549,46 +543,43 @@ function availableTile(xk,yk,setno,tileno)
     return fail;
 }
 
-// Find Candidate by Going through all connectors and finding corresponding targets
-// 
-function candidateTile(setno,tileno)
+// Highlight Pento on Coordinate
+function highlightPento(xk,yk,setno,tileno)
 {
     // Retrieve candidate tiles
-    var tileset=pentominos[0];
-    var items=tileset.pos[0];
+    var pentomino=pentominos[setno];
+    var tileset=pentomino.pos[tileno];
+
+    // If we have a connector tile!
+    var state=mapp[yk][xk];
+    if(state.tileno==LIMITTILE){
+        // For each specific tile in tileset
+        for(var tile of tileset){
+            if(state.limit.indexOf(tile.no)!=-1){
+                // tile is available in limit set
+                var dx=tile.x;
+                var dy=tile.y;
+                for(hightile of tileset){
+                    if(hightile.no<LIMITTILE||hightile.no==NORMATILE){
+                        highLightTile(xk-dx+hightile.x,yk+hightile.y+1-dy,"#000",true,0.5);
+                    }
+                }                        
+            }
+        }    
+    } 
+}
+
+// Find Candidate by Going through all connectors and finding corresponding targets - highlighting purpose
+function candidateTile(setno,tileno)
+{
+    if(mode!=TILEDRAW) return false;
 
     // Only Connector Tiles
     for(yk=0;yk<gridH;yk++){
         for(xk=0;xk<gridW;xk++){
-            var state=mapp[yk][xk];
-            if(state.limit<8&&state.limit>0){
-                // Candidate Found
-                //highLightTile(xk,yk,"#000",true);
-
-                // In for example U there are two matches and each has to be processed
-                for(itemo of items){
-                    if(itemo.no==state.limit){
-                        var dx=itemo.x;
-                        var dy=itemo.y;
-                        //console.log(dx,dy);
-                        for(item of items){
-                            // There can be more than one candidate
-                            if(item.no<8) highLightTile(xk+item.x-dx,yk+item.y-dy,"#000",true);                        
-                        }           
-                    }
-                }
-/*
-                for(itemo of items){
-                    // console.log(item);
-                    if(item.no<8){                    
-                        highLightTile(xk+itemo.x,yk+itemo.y,"#000",true);                    
-                    }
-                }
-  */
-            }
+            highlightPento(xk,yk,setno,tileno);   
         }
-    }
- 
+    } 
 }
 
 function drawMinis()
@@ -777,7 +768,11 @@ function drawit()
     }
 
     //availableTile(mx,my,5,1);
-    //candidateTile(0,0);
+    if(highSet>=0&&highSet<pentominos.length){
+        if(highTile>=0&&highTile<pentominos[highSet].pos.length){
+            candidateTile(highSet,highTile);        
+        }
+    }
 
     // Draw center tile
     c.globalAlpha=0.5;
